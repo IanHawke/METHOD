@@ -24,6 +24,7 @@ class TimeIntegrator
     Model * model;              //!< Pointer to Model object, contains governing equations and spectral decomposition
 
     Bcs * bcs;                  //!< Pointer to boundary conditions, Bcs, object
+    Bcs * rhs_bcs;              //!< Pointer to boundary conditions, Bcs, object, for RHSs
 
     FluxMethod * fluxMethod;    //!< Pointer to FluxMethod object
 
@@ -41,8 +42,8 @@ class TimeIntegrator
       @param[in] *modelExtension pointer to the ModelExtension object
 
     */
-    TimeIntegrator(Data * data, Model * model, Bcs * bcs, FluxMethod * fluxMethod, ModelExtension * modelExtension = NULL) :
-                   data(data), model(model), bcs(bcs), fluxMethod(fluxMethod), modelExtension(modelExtension) { }
+    TimeIntegrator(Data * data, Model * model, Bcs * bcs, FluxMethod * fluxMethod, ModelExtension * modelExtension = NULL, Bcs * rhs_bcs) :
+                   data(data), model(model), bcs(bcs), fluxMethod(fluxMethod), modelExtension(modelExtension), rhs_bcs(rhs_bcs) { }
 
     //! Step function
     /*!
