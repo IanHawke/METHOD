@@ -3,9 +3,6 @@
 #include <iostream>
 #include <cstdlib>
 
-// Macro for getting array index
-#define ID(variable, idx, jdx, kdx) ((variable)*(d->Nx)*(d->Ny)*(d->Nz) + (idx)*(d->Ny)*(d->Nz) + (jdx)*(d->Nz) + (kdx))
-
 //! Residual function for implicit source
 int backwardsRKresidual(void *p, int n, const double *x, double *fvec, int iflag);
 
@@ -55,7 +52,7 @@ void BackwardsRK2::step(double * cons, double * prims, double * aux, double dt)
 
   // Use RKSplit as estimate for solution, and use this estimate to start rootfind
   RKSplit::step(initGuess, tempPrims, tempAux, dt);
-  this->model->sourceTerm(initGuess, tempPrims, tempAux, tempSource);
+  model->sourceTerm(initGuess, tempPrims, tempAux, tempSource);
   for (int var(0); var < d->Ncons; var++) {
     for (int i(0); i < d->Nx; i++) {
       for (int j(0); j < d->Ny; j++) {
@@ -97,8 +94,9 @@ void BackwardsRK2::step(double * cons, double * prims, double * aux, double dt)
   }
 
   // Determine new prim and aux variables
-  this->model->getPrimitiveVars(cons, prims, aux);
-  this->bcs->apply(cons, prims, aux);
+  model->getPrimitiveVars(cons, prims, aux);
+  model->finalise(cons, prims, aux);
+  bcs->apply(cons, prims, aux);
 
   free(x);
   free(fvec);

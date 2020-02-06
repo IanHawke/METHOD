@@ -6,6 +6,7 @@
 #include "boundaryConds.h"
 #include "flux.h"
 #include "modelExtension.h"
+#include "hybrid.h"
 
 //! <b> General form of the time integrator </b>
 /*!
@@ -51,7 +52,7 @@ class TimeIntegrator
 
       @param[in] *cons pointer to conserved vector work array. Size is \f$N_{cons}*N_x*N_y*N_z\f$
       @param[in] *prims pointer to primitive vector work array. Size is \f$N_{prims}*N_x*N_y*N_z\f$
-      @param[in] *aux pointer to auxilliary vector work array. Size is \f$N_{aux}*N_x*N_y*N_z\f$
+      @param[in] *aux pointer to auxiliary vector work array. Size is \f$N_{aux}*N_x*N_y*N_z\f$
       @param[in] dt the step size desired to move by. Defaults to the value in the Data class
     */
     virtual void step(double * cons, double * prims, double * aux, double dt=0) = 0;
