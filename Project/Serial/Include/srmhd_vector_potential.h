@@ -11,8 +11,8 @@ This is the human readable description of this models variables.
     D, Sx, Sy, Sz, tau, Ax, Ay, Az, phi
   Nine primitive variables:
     rho, vx, vy, vz, p, Ax, Ay, Az, phi
-  Sixteen auxiliary variables:
-    h, W, e, c, b0, bx, by, bz, bsq, vsq, BS, Bsq, Ssq, Bx, By, Bz
+  Twenty auxiliary variables:
+    h, W, e, c, b0, bx, by, bz, bsq, vsq, BS, Bsq, Ssq, Bx, By, Bz, Ex, Ey, Ez, Phi_staggered
 
 This form uses a staggered grid. A* are defined at cell faces; everything else
 at cell centres.

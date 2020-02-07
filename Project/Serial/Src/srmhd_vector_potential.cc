@@ -19,14 +19,14 @@ SRMHD_Vector_Potential::SRMHD_Vector_Potential() : Model()
 {
   this->Ncons = 9;
   this->Nprims = 9;
-  this->Naux = 16;
+  this->Naux = 20;
 }
 
 SRMHD_Vector_Potential::SRMHD_Vector_Potential(Data * data) : Model(data)
 {
   this->Ncons = (this->data)->Ncons = 9;
   this->Nprims = (this->data)->Nprims = 9;
-  this->Naux = (this->data)->Naux = 16;
+  this->Naux = (this->data)->Naux = 20;
 
   // Solutions for C2P all cells
   solution = (double *) malloc(sizeof(double)*2*data->Nx*data->Ny*data->Nz);
@@ -53,6 +53,8 @@ SRMHD_Vector_Potential::SRMHD_Vector_Potential(Data * data) : Model(data)
   this->data->auxLabels.push_back("BS");  this->data->auxLabels.push_back("Bsq");
   this->data->auxLabels.push_back("Ssq"); this->data->auxLabels.push_back("Bx");
   this->data->auxLabels.push_back("By");  this->data->auxLabels.push_back("Bz");
+  this->data->auxLabels.push_back("Ex");  this->data->auxLabels.push_back("Ey");
+  this->data->auxLabels.push_back("Ez");  this->data->auxLabels.push_back("Phi_staggered");
 }
 
 SRMHD_Vector_Potential::~SRMHD_Vector_Potential()
@@ -104,16 +106,16 @@ void SRMHD_Vector_Potential::fluxVector(double *cons, double *prims, double *aux
                                  aux[ID(4, i, j, k)] * aux[ID(13, i, j, k)] /
                                  aux[ID(1, i, j, k)];
           // Ax
-          f[ID(5, i, j, k)] = cons[ID(8, i, j, k)];
+          f[ID(5, i, j, k)] = 0.0;
 
           // Ay
-          f[ID(6, i, j, k)] = cons[ID(8, i, j, k)];
+          f[ID(6, i, j, k)] = 0.0;
 
           // Az
-          f[ID(7, i, j, k)] = cons[ID(8, i, j, k)];
+          f[ID(7, i, j, k)] = 0.0;
 
           // Phi
-          f[ID(8, i, j, k)] = cons[ID(5, i, j, k)];
+          f[ID(8, i, j, k)] = 0.0;
 
         }
       } // End k loop
@@ -147,16 +149,16 @@ void SRMHD_Vector_Potential::fluxVector(double *cons, double *prims, double *aux
                               aux[ID(4, i, j, k)] * aux[ID(14, i, j, k)] /
                               aux[ID(1, i, j, k)];
           // Ax
-          f[ID(5, i, j, k)] = cons[ID(8, i, j, k)];
+          f[ID(5, i, j, k)] = 0.0;
 
           // Ay
-          f[ID(6, i, j, k)] = cons[ID(8, i, j, k)];
+          f[ID(6, i, j, k)] = 0.0;
 
           // Az
-          f[ID(7, i, j, k)] = cons[ID(8, i, j, k)];
+          f[ID(7, i, j, k)] = 0.0;
 
           // Phi
-          f[ID(8, i, j, k)] = cons[ID(6, i, j, k)];
+          f[ID(8, i, j, k)] = 0.0;
 
         }
       } // End k loop
@@ -190,15 +192,13 @@ void SRMHD_Vector_Potential::fluxVector(double *cons, double *prims, double *aux
                               aux[ID(4, i, j, k)] * aux[ID(15, i, j, k)] /
                               aux[ID(1, i, j, k)];
           // Ax
-          f[ID(5, i, j, k)] = cons[ID(8, i, j, k)];
-
+          f[ID(5, i, j, k)] = 0.0;
           // Ay
-          f[ID(6, i, j, k)] = cons[ID(8, i, j, k)];
-
+          f[ID(6, i, j, k)] = 0.0;
           // Az
-          f[ID(7, i, j, k)] = cons[ID(8, i, j, k)];
+          f[ID(7, i, j, k)] = 0.0;
           // Phi
-          f[ID(8, i, j, k)] = cons[ID(7, i, j, k)];
+          f[ID(8, i, j, k)] = 0.0;
 
         }
       } // End k loop
@@ -215,10 +215,11 @@ void SRMHD_Vector_Potential::fluxVector(double *cons, double *prims, double *aux
 */
 void SRMHD::sourceTermSingleCell(double *cons, double *prims, double *aux, double *source, int i, int j, int k)
 {
+  double xi = 1.5 / this->data->dt;
   for (int var(0); var < Ncons; var++) {
     if (var == 8) {
       // phi
-      source[var] = -cons[8] / (this->data->cp*this->data->cp);
+      source[var] = -xi * cons[8];
     }
     else {
       source[var] = 0;
@@ -232,7 +233,7 @@ void SRMHD::sourceTermSingleCell(double *cons, double *prims, double *aux, doubl
 */
 void SRMHD::sourceTerm(double *cons, double *prims, double *aux, double *source)
 {
-  xi = 1.5 / this->data->dt;
+  double xi = 1.5 / this->data->dt;
   for (int i(0); i < this->data->Nx; i++) {
     for (int j(0); j < this->data->Ny; j++) {
       for (int k(0); k < this->data->Nz; k++) {
