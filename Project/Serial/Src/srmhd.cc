@@ -305,7 +305,7 @@ void SRMHD::getPrimitiveVarsSingleCell(double *cons, double *prims, double *aux,
   double sol[2];                      // Guess and solution vector
   double res[2];                      // Residual/fvec vector
   int info;                           // Rootfinder flag
-  const double tol = 1.49011612e-8;   // Tolerance of rootfinder
+  const double tol = 1.4e-8;          // Tolerance of rootfinder
   const int lwa = 19;                 // Length of work array = n * (3*n + 13) / 2
   double wa[lwa];                     // Work array
 
@@ -314,7 +314,7 @@ void SRMHD::getPrimitiveVarsSingleCell(double *cons, double *prims, double *aux,
   // Bx, By, Bz
   prims[5] = cons[5];
   prims[6] = cons[6];
-  prims[7] = cons[8];
+  prims[7] = cons[7];
 
   // BS
   aux[10] = cons[5] * cons[1] + cons[6] * cons[2] + cons[7] * cons[3];
