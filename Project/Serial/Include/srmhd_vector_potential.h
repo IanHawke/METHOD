@@ -232,6 +232,13 @@ class SRMHD_Vector_Potential : public Model
     */
     void finalise(double *cons, double *prims, double *aux) { };
 
+    //! A (vector potential) to B (magnetic field)
+    /*!
+      @par
+        Uses corner differencing
+    */
+    void AToB(double *c_or_p, double *aux);
+
 };
 
 

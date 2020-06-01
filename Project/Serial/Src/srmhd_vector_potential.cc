@@ -214,7 +214,7 @@ void SRMHD_Vector_Potential::fluxVector(double *cons, double *prims, double *aux
     See Anton 2010, `Relativistic Magnetohydrodynamcis: Renormalized Eignevectors
   and Full Wave Decompostiion Riemann Solver`
 */
-void SRMHD::sourceTermSingleCell(double *cons, double *prims, double *aux, double *source, int i, int j, int k)
+void SRMHD_Vector_Potential::sourceTermSingleCell(double *cons, double *prims, double *aux, double *source, int i, int j, int k)
 {
   double xi = 1.5 / this->data->dt;
   for (int var(0); var < Ncons; var++) {
@@ -232,7 +232,7 @@ void SRMHD::sourceTermSingleCell(double *cons, double *prims, double *aux, doubl
 /*!
     See Giacomazzo's Spritz paper
 */
-void SRMHD::sourceTerm(double *cons, double *prims, double *aux, double *source)
+void SRMHD_Vector_Potential::sourceTerm(double *cons, double *prims, double *aux, double *source)
 {
   // Syntax
   Data * d(this->data);
@@ -264,7 +264,7 @@ void SRMHD::sourceTerm(double *cons, double *prims, double *aux, double *source)
   }
 
   // Up and downwind fluxes, which give electric fields
-  double *fplus, *fminus;
+  double *fplus, *fminus, *frecon;
   fplus = (double *) malloc(sizeof(double) * nvars * d->Nx * d->Ny * d->Nz);
   fminus = (double *) malloc(sizeof(double) * nvars * d->Nx * d->Ny * d->Nz);
   frecon = (double *) malloc(sizeof(double) * nvars * d->Nx * d->Ny * d->Nz);
@@ -301,7 +301,7 @@ void SRMHD::sourceTerm(double *cons, double *prims, double *aux, double *source)
       }
     }
   }
-  for (var(0); var < nvars; var++) {
+  for (int var(0); var < nvars; var++) {
     for (int i(0); i < d->Nx; i++) {
       for (int j(0); j < d->Ny; j++) {
         for (int k(0); k < d->Nz; k++) {
@@ -327,7 +327,7 @@ void SRMHD::sourceTerm(double *cons, double *prims, double *aux, double *source)
     }
   }
   // frecon now contains E at faces. We want it at corners.
-  for (var(0); var < nvars; var++) {
+  for (int var(0); var < nvars; var++) {
     for (int i(0); i < d->Nx; i++) {
       for (int j(0); j < d->Ny; j++) {
         for (int k(0); k < d->Nz; k++) {
@@ -401,7 +401,7 @@ int SRMHDresidual(void *p, int n, const double *x, double *fvec, int iflag)
   return 0;
 }
 
-void SRMHD::getPrimitiveVarsSingleCell(double *cons, double *prims, double *aux, int i, int j, int k)
+void SRMHD_Vector_Potential::getPrimitiveVarsSingleCell(double *cons, double *prims, double *aux, int i, int j, int k)
 {
   // Syntax
   Data * d(this->data);
@@ -495,7 +495,7 @@ void SRMHD::getPrimitiveVarsSingleCell(double *cons, double *prims, double *aux,
   old values for the prims and aux vectors.
   Output is the current values of cons, prims and aux.
 */
-void SRMHD::getPrimitiveVars(double *cons, double *prims, double *aux)
+void SRMHD_Vector_Potential::getPrimitiveVars(double *cons, double *prims, double *aux)
 {
   // Syntax
   Data * d(this->data);
@@ -517,16 +517,16 @@ void SRMHD::getPrimitiveVars(double *cons, double *prims, double *aux)
       for (int k(0); k < d->Nz-1; k++) {
         // 1d (x derivs)
         aux[ID(13, i, j, k)] = 0;
-        aux[ID(14, i, j, k)] = -(cons[ID(7, i, j, k)] - cons[ID(7, i+1, j, k)]) / this->d->dx;
-        aux[ID(15, i, j, k)] =  (cons[ID(6, i, j, k)] - cons[ID(6, i+1, j, k)]) / this->d->dx;
+        aux[ID(14, i, j, k)] = -(cons[ID(7, i, j, k)] - cons[ID(7, i+1, j, k)]) / d->dx;
+        aux[ID(15, i, j, k)] =  (cons[ID(6, i, j, k)] - cons[ID(6, i+1, j, k)]) / d->dx;
         // 2d (y derivs)
-        if (this->d->Ny > 1) {
-          aux[ID(13, i, j, k)] += (cons[ID(7, i, j, k)] - cons[ID(7, i+1, j, k)]) / this->d->dy;
-          aux[ID(15, i, j, k)] -= (cons[ID(5, i, j, k)] - cons[ID(5, i+1, j, k)]) / this->d->dy;
+        if (d->Ny > 1) {
+          aux[ID(13, i, j, k)] += (cons[ID(7, i, j, k)] - cons[ID(7, i+1, j, k)]) / d->dy;
+          aux[ID(15, i, j, k)] -= (cons[ID(5, i, j, k)] - cons[ID(5, i+1, j, k)]) / d->dy;
           // 3d (z derivs)
-          if (this->d->Nz > 1) {
-            aux[ID(13, i, j, k)] -= (cons[ID(6, i, j, k)] - cons[ID(6, i+1, j, k)]) / this->d->dz;
-            aux[ID(14, i, j, k)] += (cons[ID(5, i, j, k)] - cons[ID(5, i+1, j, k)]) / this->d->dz;
+          if (d->Nz > 1) {
+            aux[ID(13, i, j, k)] -= (cons[ID(6, i, j, k)] - cons[ID(6, i+1, j, k)]) / d->dz;
+            aux[ID(14, i, j, k)] += (cons[ID(5, i, j, k)] - cons[ID(5, i+1, j, k)]) / d->dz;
           }
         }
       }
@@ -701,7 +701,7 @@ void SRMHD::getPrimitiveVars(double *cons, double *prims, double *aux)
 /*!
     See the Spritz paper
 */
-void SRMHD::AToB(double *c_or_p, double *aux)
+void SRMHD_Vector_Potential::AToB(double *c_or_p, double *aux)
 {
 
     // Syntax
@@ -713,16 +713,16 @@ void SRMHD::AToB(double *c_or_p, double *aux)
         for (int k(0); k < d->Nz-1; k++) {
           // 1d (x derivs)
           aux[ID(13, i, j, k)] = 0;
-          aux[ID(14, i, j, k)] = -(c_or_p[ID(7, i, j, k)] - c_or_p[ID(7, i+1, j, k)]) / this->d->dx;
-          aux[ID(15, i, j, k)] =  (c_or_p[ID(6, i, j, k)] - c_or_p[ID(6, i+1, j, k)]) / this->d->dx;
+          aux[ID(14, i, j, k)] = -(c_or_p[ID(7, i, j, k)] - c_or_p[ID(7, i+1, j, k)]) / d->dx;
+          aux[ID(15, i, j, k)] =  (c_or_p[ID(6, i, j, k)] - c_or_p[ID(6, i+1, j, k)]) / d->dx;
           // 2d (y derivs)
-          if (this->d->Ny > 1) {
-            aux[ID(13, i, j, k)] += (c_or_p[ID(7, i, j, k)] - c_or_p[ID(7, i+1, j, k)]) / this->d->dy;
-            aux[ID(15, i, j, k)] -= (c_or_p[ID(5, i, j, k)] - c_or_p[ID(5, i+1, j, k)]) / this->d->dy;
+          if (d->Ny > 1) {
+            aux[ID(13, i, j, k)] += (c_or_p[ID(7, i, j, k)] - c_or_p[ID(7, i+1, j, k)]) / d->dy;
+            aux[ID(15, i, j, k)] -= (c_or_p[ID(5, i, j, k)] - c_or_p[ID(5, i+1, j, k)]) / d->dy;
             // 3d (z derivs)
-            if (this->d->Nz > 1) {
-              aux[ID(13, i, j, k)] -= (c_or_p[ID(6, i, j, k)] - c_or_p[ID(6, i+1, j, k)]) / this->d->dz;
-              aux[ID(14, i, j, k)] += (c_or_p[ID(5, i, j, k)] - c_or_p[ID(5, i+1, j, k)]) / this->d->dz;
+            if (d->Nz > 1) {
+              aux[ID(13, i, j, k)] -= (c_or_p[ID(6, i, j, k)] - c_or_p[ID(6, i+1, j, k)]) / d->dz;
+              aux[ID(14, i, j, k)] += (c_or_p[ID(5, i, j, k)] - c_or_p[ID(5, i+1, j, k)]) / d->dz;
             }
           }
         }
@@ -737,7 +737,7 @@ void SRMHD::AToB(double *c_or_p, double *aux)
     Relations have been taken from Anton 2010, `Relativistic Magnetohydrodynamcis:
   Renormalized Eignevectors and Full Wave Decompostiion Riemann Solver`
 */
-void SRMHD::primsToAll(double *cons, double *prims, double *aux)
+void SRMHD_Vector_Potential::primsToAll(double *cons, double *prims, double *aux)
 {
 
 

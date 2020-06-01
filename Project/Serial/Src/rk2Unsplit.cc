@@ -27,8 +27,8 @@ void RK2Unsplit::setSource(double * cons, double * prims, double * aux)
 
 }
 
-RK2Unsplit::RK2(Data * data, Model * model, Bcs * bcs, FluxMethod * fluxMethod, ModelExtension * modelExtension) :
-      TimeIntegrator(data, model, bcs, fluxMethod, modelExtension)
+RK2Unsplit::RK2Unsplit(Data * data, Model * model, Bcs * bcs, FluxMethod * fluxMethod, ModelExtension * modelExtension, Bcs * rhs_bcs) :
+      TimeIntegrator(data, model, bcs, fluxMethod, modelExtension, rhs_bcs)
 {
   // Syntax
   Data * d(this->data);
@@ -42,7 +42,7 @@ RK2Unsplit::RK2(Data * data, Model * model, Bcs * bcs, FluxMethod * fluxMethod, 
   args2 = (double *) malloc(sizeof(double) * Ntot * d->Ncons);
 }
 
-RK2Unsplit::~RK2()
+RK2Unsplit::~RK2Unsplit()
 {
   // Free arrays
   free(p1cons);
@@ -90,7 +90,7 @@ void RK2Unsplit::predictorStep(double * cons, double * prims, double * aux, doub
   }
 
   // Get source term
-  this->setSource(cons, prims, aux, dt);
+  this->setSource(cons, prims, aux);
 
   // Get first approximation of flux contribution
   this->fluxMethod->F(cons, prims, aux, d->f, args1);
@@ -107,7 +107,7 @@ void RK2Unsplit::predictorStep(double * cons, double * prims, double * aux, doub
   }
 
   // Apply BC to RHSs
-  if this->rhs_bcs
+  if (this->rhs_bcs != NULL)
   {
     this->rhs_bcs->apply(args1);
   }
@@ -133,7 +133,7 @@ void RK2Unsplit::correctorStep(double * cons, double * prims, double * aux, doub
   if (dt <= 0) (dt=d->dt);
 
   // Get source term
-  this->setSource(p1cons, p1prims, p1aux, dt);
+  this->setSource(p1cons, p1prims, p1aux);
 
   // Get second approximation of flux contribution
   this->fluxMethod->F(p1cons, p1prims, p1aux, d->f, args2);

@@ -235,11 +235,11 @@ void FVS::F(double * cons, double * prims, double * aux, double * f, double * fn
     fz = (double *) malloc(sizeof(double) * d->Nx * d->Ny * d->Nz * d->Ncons);
     // Determine flux vectors
     this->model->fluxVector(cons, prims, aux, f, 0);
-    this->fluxReconstruction(cons, prims, aux, f, fx, 0);
+    this->fluxReconstruction_r3(cons, prims, aux, f, fx, 0);
     this->model->fluxVector(cons, prims, aux, f, 1);
-    this->fluxReconstruction(cons, prims, aux, f, fy, 1);
+    this->fluxReconstruction_r3(cons, prims, aux, f, fy, 1);
     this->model->fluxVector(cons, prims, aux, f, 2);
-    this->fluxReconstruction(cons, prims, aux, f, fz, 2);
+    this->fluxReconstruction_r3(cons, prims, aux, f, fz, 2);
     for (int var(0); var < d->Ncons; var++) {
       for (int i(0); i < d->Nx-1; i++) {
         for (int j(0); j < d->Ny-1; j++) {
@@ -263,9 +263,9 @@ void FVS::F(double * cons, double * prims, double * aux, double * f, double * fn
     fx = (double *) malloc(sizeof(double) * d->Nx * d->Ny * d->Nz * d->Ncons);
     fy = (double *) malloc(sizeof(double) * d->Nx * d->Ny * d->Nz * d->Ncons);
     this->model->fluxVector(cons, prims, aux, f, 0);
-    this->fluxReconstruction(cons, prims, aux, f, fx, 0);
+    this->fluxReconstruction_r3(cons, prims, aux, f, fx, 0);
     this->model->fluxVector(cons, prims, aux, f, 1);
-    this->fluxReconstruction(cons, prims, aux, f, fy, 1);
+    this->fluxReconstruction_r3(cons, prims, aux, f, fy, 1);
     for (int var(0); var < d->Ncons; var++) {
       for (int i(0); i < d->Nx-1; i++) {
         for (int j(0); j < d->Ny-1; j++) {
@@ -284,7 +284,7 @@ void FVS::F(double * cons, double * prims, double * aux, double * f, double * fn
   {
     fx = (double *) malloc(sizeof(double) * d->Nx * d->Ny * d->Nz * d->Ncons);
     this->model->fluxVector(cons, prims, aux, f, 0);
-    this->fluxReconstruction(cons, prims, aux, f, fx, 0);
+    this->fluxReconstruction_r3(cons, prims, aux, f, fx, 0);
     for (int var(0); var < d->Ncons; var++) {
       for (int i(0); i < d->Nx-1; i++) {
           fnet[ID(var, i, 0, 0)] = (fx[ID(var, i+1, 0, 0)] / d->dx - fx[ID(var, i, 0, 0)] / d->dx);

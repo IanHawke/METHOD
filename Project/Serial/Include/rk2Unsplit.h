@@ -36,8 +36,14 @@
   @sa RKSplit
   @sa RK2
 */
-class RK2Unsplit : public RK2
+
+class RK2Unsplit : public TimeIntegrator
 {
+  public:
+
+      // Need some work arrays
+      double *p1cons, *p1prims, *p1aux, *args1, *args2;
+
 
   public:
     //! Constructor
@@ -53,11 +59,19 @@ class RK2Unsplit : public RK2
       @sa TimeIntegrator::TimeIntegrator
       @sa RK2::RK2
     */
-    RK2Unsplit(Data * data, Model * model, Bcs * bcs, FluxMethod * fluxMethod, ModelExtension * modelExtension = NULL, Bcs * rhs_bcs = NULL) :
-            RK2(data, model, bcs, fluxMethod, modelExtension, rhs_bcs) { }
+    RK2Unsplit(Data * data, Model * model, Bcs * bcs, FluxMethod * fluxMethod, ModelExtension * modelExtension = NULL, Bcs * rhs_bcs = NULL);
+
+    ~RK2Unsplit();
 
     void setSource(double * cons, double * prims, double * aux);
 
+
+    void finalise(double * cons, double * prims, double * aux);
+
+    void predictorStep(double * cons, double * prims, double * aux, double dt);
+
+    void correctorStep(double * cons, double * prims, double * aux, double dt);
+    
     //! Performs a single time step
     /*!
         The timestep will use the current values of the conserved, primitive and

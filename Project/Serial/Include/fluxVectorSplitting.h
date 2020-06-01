@@ -101,7 +101,9 @@ class FVS : public FluxMethod
       This is performed in F
       @sa F
     */
-    void fluxReconstruction(double * cons, double * prims, double * aux, double * f, double * frecon, int dir, int vars=-1);
+    void fluxReconstruction_r3(double * cons, double * prims, double * aux, double * f, double * frecon, int dir, int vars=-1);
+
+    void fluxReconstruction_r5(double * cons, double * prims, double * aux, double * f, double * frecon, int dir, int vars=-1);
 
     //! Numerical flux function
     /*!

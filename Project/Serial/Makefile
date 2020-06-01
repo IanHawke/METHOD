@@ -110,6 +110,9 @@ twoFluidEMHD.o : $(MODULE_DIR)/twoFluidEMHD.cc $(INC_DIR)/twoFluidEMHD.h
 srmhd.o : $(MODULE_DIR)/srmhd.cc $(INC_DIR)/srmhd.h
 	$(CC)	$<	-c	$(CXXFLAGS) -I$(INC_DIR) -I$(RTFIND_INC_DIR)
 
+srmhd_vector_potential.o : $(MODULE_DIR)/srmhd_vector_potential.cc $(INC_DIR)/srmhd_vector_potential.h $(INC_DIR)/weno.h
+	$(CC)	$<	-c	$(CXXFLAGS) -I$(INC_DIR) -I$(RTFIND_INC_DIR)
+
 srrmhd.o : $(MODULE_DIR)/srrmhd.cc $(INC_DIR)/srrmhd.h
 	$(CC)	$<	-c	$(CXXFLAGS) -I$(INC_DIR) -I$(RTFIND_INC_DIR)
 
@@ -126,6 +129,9 @@ RK2.o : $(MODULE_DIR)/RK2.cc $(INC_DIR)/RK2.h
 		$(CC)	$<	-c	$(CXXFLAGS) -I$(INC_DIR)
 
 rkSplit.o : $(MODULE_DIR)/rkSplit.cc $(INC_DIR)/rkSplit.h $(INC_DIR)/RK2.h
+	$(CC)	$<	-c	$(CXXFLAGS) -I$(INC_DIR)
+
+rk2Unsplit.o : $(MODULE_DIR)/rk2Unsplit.cc $(INC_DIR)/rk2Unsplit.h
 	$(CC)	$<	-c	$(CXXFLAGS) -I$(INC_DIR)
 
 rkSplit2ndOrder.o : $(MODULE_DIR)/rkSplit2ndOrder.cc $(INC_DIR)/rkSplit2ndOrder.h $(INC_DIR)/RK2.h
