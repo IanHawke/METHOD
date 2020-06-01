@@ -53,8 +53,8 @@ class RK2Unsplit : public RK2
       @sa TimeIntegrator::TimeIntegrator
       @sa RK2::RK2
     */
-    RK2Unsplit(Data * data, Model * model, Bcs * bcs, FluxMethod * fluxMethod, ModelExtension * modelExtension = NULL) :
-            RK2(data, model, bcs, fluxMethod, modelExtension) { }
+    RK2Unsplit(Data * data, Model * model, Bcs * bcs, FluxMethod * fluxMethod, ModelExtension * modelExtension = NULL, Bcs * rhs_bcs = NULL) :
+            RK2(data, model, bcs, fluxMethod, modelExtension, rhs_bcs) { }
 
     void setSource(double * cons, double * prims, double * aux);
 

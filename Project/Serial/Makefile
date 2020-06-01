@@ -33,6 +33,7 @@ SRCS = main.cc 								\
 			 RK2.cc 								\
 			 rkSplit.cc 						\
 			 rkSplit2ndOrder.cc			\
+			 rk2Unsplit.cc          \
 			 backwardsRK.cc 				\
 			 backRKArgs.cc 					\
 			 SSP2.cc 								\
@@ -44,6 +45,7 @@ SRCS = main.cc 								\
 			 saveData.cc 						\
 			 fluxVectorSplitting.cc \
 			 srrmhd.cc 							\
+			 srmhd_vector_potential.cc 							\
 			 REGIME.cc 							\
 			 hybrid.cc
 

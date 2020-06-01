@@ -8,6 +8,7 @@
 */
 
 #include "srmhd_vector_potential.h"
+#include "weno.h"
 #include "cminpack.h"
 #include <cmath>
 #include <cstdlib>
@@ -106,7 +107,7 @@ void SRMHD_Vector_Potential::fluxVector(double *cons, double *prims, double *aux
                                  aux[ID(4, i, j, k)] * aux[ID(13, i, j, k)] /
                                  aux[ID(1, i, j, k)];
           // Ax
-          f[ID(5, i, j, k)] = 0.0;
+          f[ID(5, i, j, k)] = cons[ID(8, i, j, k)];
 
           // Ay
           f[ID(6, i, j, k)] = 0.0;
@@ -115,7 +116,7 @@ void SRMHD_Vector_Potential::fluxVector(double *cons, double *prims, double *aux
           f[ID(7, i, j, k)] = 0.0;
 
           // Phi
-          f[ID(8, i, j, k)] = 0.0;
+          f[ID(8, i, j, k)] = cons[ID(5, i, j, k)];
 
         }
       } // End k loop
@@ -152,13 +153,13 @@ void SRMHD_Vector_Potential::fluxVector(double *cons, double *prims, double *aux
           f[ID(5, i, j, k)] = 0.0;
 
           // Ay
-          f[ID(6, i, j, k)] = 0.0;
+          f[ID(6, i, j, k)] = cons[ID(8, i, j, k)];
 
           // Az
           f[ID(7, i, j, k)] = 0.0;
 
           // Phi
-          f[ID(8, i, j, k)] = 0.0;
+          f[ID(8, i, j, k)] = cons[ID(6, i, j, k)];
 
         }
       } // End k loop
@@ -196,9 +197,9 @@ void SRMHD_Vector_Potential::fluxVector(double *cons, double *prims, double *aux
           // Ay
           f[ID(6, i, j, k)] = 0.0;
           // Az
-          f[ID(7, i, j, k)] = 0.0;
+          f[ID(7, i, j, k)] = cons[ID(8, i, j, k)];
           // Phi
-          f[ID(8, i, j, k)] = 0.0;
+          f[ID(8, i, j, k)] = cons[ID(7, i, j, k)];
 
         }
       } // End k loop
@@ -233,7 +234,19 @@ void SRMHD::sourceTermSingleCell(double *cons, double *prims, double *aux, doubl
 */
 void SRMHD::sourceTerm(double *cons, double *prims, double *aux, double *source)
 {
-  double xi = 1.5 / this->data->dt;
+  // Syntax
+  Data * d(this->data);
+
+  // Order of weno scheme
+  int order(3);
+
+  // Wave speed
+  double alpha(1);
+  // Number of variables, which is 3 for electric fields
+  int nvars(3);
+
+  // First do the generalized Lorenz gauge damping
+  double xi = 1.5 / d->dt;
   for (int i(0); i < this->data->Nx; i++) {
     for (int j(0); j < this->data->Ny; j++) {
       for (int k(0); k < this->data->Nz; k++) {
@@ -249,6 +262,98 @@ void SRMHD::sourceTerm(double *cons, double *prims, double *aux, double *source)
       }
     }
   }
+
+  // Up and downwind fluxes, which give electric fields
+  double *fplus, *fminus;
+  fplus = (double *) malloc(sizeof(double) * nvars * d->Nx * d->Ny * d->Nz);
+  fminus = (double *) malloc(sizeof(double) * nvars * d->Nx * d->Ny * d->Nz);
+  frecon = (double *) malloc(sizeof(double) * nvars * d->Nx * d->Ny * d->Nz);
+
+  // Lax-Friedrichs approximation of flux
+  double Ex(0), Ey(0), Ez(0);
+  // We are going to do a double reconstruction
+  // E is the flux term for B, but components and signs need care
+  // dt Bx + dx ( 0 ) + dy ( Ez) + dz (-Ey)
+  // dt By + dx (-Ez) + dy ( 0 ) + dz ( Ex)
+  // dt Bz + dx ( Ey) + dy (-Ex) + dz ( 0 )
+  // So Ex(+) is Ex + \alpha (By - Bz)
+  // So Ey(+) is Ey + \alpha (Bz - Bx)
+  // So Ez(+) is Ez + \alpha (Bx - By)
+  // Get the fluxes first
+  for (int i(0); i < d->Nx; i++) {
+    for (int j(0); j < d->Ny; j++) {
+      for (int k(0); k < d->Nz; k++) {
+        double Bx = aux[ID(13, i, j, k)];
+        double By = aux[ID(14, i, j, k)];
+        double Bz = aux[ID(15, i, j, k)];
+        double vx = prims[ID(1, i, j, k)];
+        double vy = prims[ID(2, i, j, k)];
+        double vz = prims[ID(3, i, j, k)];
+        Ex = By * vz - Bz * vy;
+        Ey =-Bx * vz + Bz * vx;
+        Ez = Bx * vy - By * vx;
+        fplus [ID(0, i, j, k)] = 0.5 * (Ex + alpha * (By - Bz));
+        fminus[ID(0, i, j, k)] = 0.5 * (Ex - alpha * (By - Bz));
+        fplus [ID(1, i, j, k)] = 0.5 * (Ey + alpha * (Bz - Bx));
+        fminus[ID(1, i, j, k)] = 0.5 * (Ey - alpha * (Bz - Bx));
+        fplus [ID(2, i, j, k)] = 0.5 * (Ez + alpha * (Bx - By));
+        fminus[ID(2, i, j, k)] = 0.5 * (Ez - alpha * (Bx - By));
+      }
+    }
+  }
+  for (var(0); var < nvars; var++) {
+    for (int i(0); i < d->Nx; i++) {
+      for (int j(0); j < d->Ny; j++) {
+        for (int k(0); k < d->Nz; k++) {
+          if (i >= order && i < d->Nx-order) {
+            frecon[ID(var, i, j, k)] = weno5_upwind(
+                                        fplus[ID(var, i, j-order  , k)],
+                                        fplus[ID(var, i, j-order+1, k)],
+                                        fplus[ID(var, i, j-order+2, k)],
+                                        fplus[ID(var, i, j-order+3, k)],
+                                        fplus[ID(var, i, j-order+4, k)]) +
+                                       weno5_upwind(
+                                        fminus[ID(var, i, j+order-1, k)],
+                                        fminus[ID(var, i, j+order-2, k)],
+                                        fminus[ID(var, i, j+order-3, k)],
+                                        fminus[ID(var, i, j+order-4, k)],
+                                        fminus[ID(var, i, j+order-5, k)]);
+          }
+          else {
+            frecon[ID(var, i, j, k)] = 0.0;
+          }
+        }
+      }
+    }
+  }
+  // frecon now contains E at faces. We want it at corners.
+  for (var(0); var < nvars; var++) {
+    for (int i(0); i < d->Nx; i++) {
+      for (int j(0); j < d->Ny; j++) {
+        for (int k(0); k < d->Nz; k++) {
+          if (i >= order && i < d->Nx-order) {
+            double E_corner         = weno5_upwind(
+                                        frecon[ID(var, i-order, j  , k)],
+                                        frecon[ID(var, i-order+1, j, k)],
+                                        frecon[ID(var, i-order+2, j, k)],
+                                        frecon[ID(var, i-order+3, j, k)],
+                                        frecon[ID(var, i-order+4, j, k)]) +
+                                       weno5_upwind(
+                                        frecon[ID(var, i+order-1, j, k)],
+                                        frecon[ID(var, i+order-2, j, k)],
+                                        frecon[ID(var, i+order-3, j, k)],
+                                        frecon[ID(var, i+order-4, j, k)],
+                                        frecon[ID(var, i+order-5, j, k)]);
+            // This flux gives us the corner electric flux,
+            // which is the source term for A
+            source[ID(5+var, i, j, k)] += E_corner;
+          }
+        }
+      }
+    }
+  }
+
+
 }
 
 //! Residual function to minimize in the format required by cminpack
@@ -592,6 +697,41 @@ void SRMHD::getPrimitiveVars(double *cons, double *prims, double *aux)
 
 
 
+//! Go from cons or prim containing A to aux containing B.
+/*!
+    See the Spritz paper
+*/
+void SRMHD::AToB(double *c_or_p, double *aux)
+{
+
+    // Syntax
+    Data * d = this->data;
+
+    // Note the staggered grid effects at the top boundaries.
+    for (int i(0); i < d->Nx-1; i++) {
+      for (int j(0); j < d->Ny-1; j++) {
+        for (int k(0); k < d->Nz-1; k++) {
+          // 1d (x derivs)
+          aux[ID(13, i, j, k)] = 0;
+          aux[ID(14, i, j, k)] = -(c_or_p[ID(7, i, j, k)] - c_or_p[ID(7, i+1, j, k)]) / this->d->dx;
+          aux[ID(15, i, j, k)] =  (c_or_p[ID(6, i, j, k)] - c_or_p[ID(6, i+1, j, k)]) / this->d->dx;
+          // 2d (y derivs)
+          if (this->d->Ny > 1) {
+            aux[ID(13, i, j, k)] += (c_or_p[ID(7, i, j, k)] - c_or_p[ID(7, i+1, j, k)]) / this->d->dy;
+            aux[ID(15, i, j, k)] -= (c_or_p[ID(5, i, j, k)] - c_or_p[ID(5, i+1, j, k)]) / this->d->dy;
+            // 3d (z derivs)
+            if (this->d->Nz > 1) {
+              aux[ID(13, i, j, k)] -= (c_or_p[ID(6, i, j, k)] - c_or_p[ID(6, i+1, j, k)]) / this->d->dz;
+              aux[ID(14, i, j, k)] += (c_or_p[ID(5, i, j, k)] - c_or_p[ID(5, i+1, j, k)]) / this->d->dz;
+            }
+          }
+        }
+      }
+    }
+
+}
+
+
 //! Generate to the conserved and auxiliary variables
 /*!
     Relations have been taken from Anton 2010, `Relativistic Magnetohydrodynamcis:
@@ -605,26 +745,7 @@ void SRMHD::primsToAll(double *cons, double *prims, double *aux)
   Data * d = this->data;
 
   // Do the A -> B first. Note the staggered grid effects at the top boundaries.
-  for (int i(0); i < d->Nx-1; i++) {
-    for (int j(0); j < d->Ny-1; j++) {
-      for (int k(0); k < d->Nz-1; k++) {
-        // 1d (x derivs)
-        aux[ID(13, i, j, k)] = 0;
-        aux[ID(14, i, j, k)] = -(cons[ID(7, i, j, k)] - cons[ID(7, i+1, j, k)]) / this->d->dx;
-        aux[ID(15, i, j, k)] =  (cons[ID(6, i, j, k)] - cons[ID(6, i+1, j, k)]) / this->d->dx;
-        // 2d (y derivs)
-        if (this->d->Ny > 1) {
-          aux[ID(13, i, j, k)] += (cons[ID(7, i, j, k)] - cons[ID(7, i+1, j, k)]) / this->d->dy;
-          aux[ID(15, i, j, k)] -= (cons[ID(5, i, j, k)] - cons[ID(5, i+1, j, k)]) / this->d->dy;
-          // 3d (z derivs)
-          if (this->d->Nz > 1) {
-            aux[ID(13, i, j, k)] -= (cons[ID(6, i, j, k)] - cons[ID(6, i+1, j, k)]) / this->d->dz;
-            aux[ID(14, i, j, k)] += (cons[ID(5, i, j, k)] - cons[ID(5, i+1, j, k)]) / this->d->dz;
-          }
-        }
-      }
-    }
-  }
+  this->AToB(prims, aux);
 
   for (int i(0); i < d->Nx-1; i++) {
     for (int j(0); j < d->Ny-1; j++) {

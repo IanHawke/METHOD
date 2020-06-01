@@ -1,7 +1,7 @@
 #include "fluxVectorSplitting.h"
 #include <cstdlib>
 
-void FVS::fluxReconstruction(double * cons, double * prims, double * aux, double * f, double * frecon, int dir, int vars)
+void FVS::fluxReconstruction_r3(double * cons, double * prims, double * aux, double * f, double * frecon, int dir, int vars)
 {
   // Syntax
   Data * d(this->data);
@@ -87,6 +87,124 @@ void FVS::fluxReconstruction(double * cons, double * prims, double * aux, double
                                             weno3_upwind(fminus[ID(var, i, j, k+order-1)],
                                                          fminus[ID(var, i, j, k+order-2)],
                                                          fminus[ID(var, i, j, k+order-3)]);
+            }
+            else {
+              frecon[ID(var, i, j, k)] = 0.0;
+            }
+          }
+        }
+      }
+    }
+  }
+  // Free arrays
+  free(fplus);
+  free(fminus);
+}
+
+void FVS::fluxReconstruction_r5(double * cons, double * prims, double * aux, double * f, double * frecon, int dir, int vars)
+{
+  // Syntax
+  Data * d(this->data);
+
+  // Order of weno scheme
+  int order(3);
+
+  // Wave speed
+  double alpha(1);
+
+  // Size of vector to reconstruct (can be set to save time for subgrid models)
+  if (vars<0) vars = d->Ncons;
+
+  // Up and downwind fluxes
+  double *fplus, *fminus;
+  fplus = (double *) malloc(sizeof(double) * vars * d->Nx * d->Ny * d->Nz);
+  fminus = (double *) malloc(sizeof(double) * vars * d->Nx * d->Ny * d->Nz);
+
+  // Lax-Friedrichs approximation of flux
+  for (int var(0); var < vars; var++) {
+    for (int i(0); i < d->Nx; i++) {
+      for (int j(0); j < d->Ny; j++) {
+        for (int k(0); k < d->Nz; k++) {
+          fplus[ID(var, i, j, k)] = 0.5 * (f[ID(var, i, j, k)] + alpha * cons[ID(var, i, j, k)]);
+          fminus[ID(var, i, j, k)] = 0.5 * (f[ID(var, i, j, k)] - alpha * cons[ID(var, i, j, k)]);
+        }
+      }
+    }
+  }
+
+  // Reconstruct to determine the flux at the cell face and compute difference
+  if (dir == 0) { // x-direction
+    for (int var(0); var < vars; var++) {
+      for (int i(0); i < d->Nx; i++) {
+        for (int j(0); j < d->Ny; j++) {
+          for (int k(0); k < d->Nz; k++) {
+            if (i >= order && i < d->Nx-order) {
+              frecon[ID(var, i, j, k)] = weno5_upwind(
+                                          fplus[ID(var, i-order  , j, k)],
+                                          fplus[ID(var, i-order+1, j, k)],
+                                          fplus[ID(var, i-order+2, j, k)],
+                                          fplus[ID(var, i-order+3, j, k)],
+                                          fplus[ID(var, i-order+4, j, k)]) +
+                                         weno5_upwind(
+                                          fminus[ID(var, i+order-1, j, k)],
+                                          fminus[ID(var, i+order-2, j, k)],
+                                          fminus[ID(var, i+order-3, j, k)],
+                                          fminus[ID(var, i+order-4, j, k)],
+                                          fminus[ID(var, i+order-5, j, k)]);
+            }
+            else {
+              frecon[ID(var, i, j, k)] = 0.0;
+            }
+          }
+        }
+      }
+    }
+  }
+  else if (dir == 1) { // y-direction
+    for (int var(0); var < vars; var++) {
+      for (int i(0); i < d->Nx; i++) {
+        for (int j(0); j < d->Ny; j++) {
+          for (int k(0); k < d->Nz; k++) {
+            if (j >= order && j < d->Ny-order) {
+              frecon[ID(var, i, j, k)] = weno5_upwind(
+                                          fplus[ID(var, i, j-order  , k)],
+                                          fplus[ID(var, i, j-order+1, k)],
+                                          fplus[ID(var, i, j-order+2, k)],
+                                          fplus[ID(var, i, j-order+3, k)],
+                                          fplus[ID(var, i, j-order+4, k)]) +
+                                         weno5_upwind(
+                                          fminus[ID(var, i, j+order-1, k)],
+                                          fminus[ID(var, i, j+order-2, k)],
+                                          fminus[ID(var, i, j+order-3, k)],
+                                          fminus[ID(var, i, j+order-4, k)],
+                                          fminus[ID(var, i, j+order-5, k)]);
+            }
+            else {
+              frecon[ID(var, i, j, k)] = 0.0;
+            }
+          }
+        }
+      }
+    }
+  }
+  else { // z-direction
+    for (int var(0); var < vars; var++) {
+      for (int i(0); i < d->Nx; i++) {
+        for (int j(0); j < d->Ny; j++) {
+          for (int k(0); k < d->Nz; k++) {
+            if (k >= order && k < d->Nz-order) {
+              frecon[ID(var, i, j, k)] = weno5_upwind(
+                                          fplus[ID(var, i, j, k-order  )],
+                                          fplus[ID(var, i, j, k-order+1)],
+                                          fplus[ID(var, i, j, k-order+2)],
+                                          fplus[ID(var, i, j, k-order+3)],
+                                          fplus[ID(var, i, j, k-order+4)]) +
+                                         weno5_upwind(
+                                          fminus[ID(var, i, j, k+order-1)],
+                                          fminus[ID(var, i, j, k+order-2)],
+                                          fminus[ID(var, i, j, k+order-3)],
+                                          fminus[ID(var, i, j, k+order-4)],
+                                          fminus[ID(var, i, j, k+order-5)]);
             }
             else {
               frecon[ID(var, i, j, k)] = 0.0;

@@ -42,7 +42,7 @@ class TimeIntegrator
       @param[in] *modelExtension pointer to the ModelExtension object
 
     */
-    TimeIntegrator(Data * data, Model * model, Bcs * bcs, FluxMethod * fluxMethod, ModelExtension * modelExtension = NULL, Bcs * rhs_bcs) :
+    TimeIntegrator(Data * data, Model * model, Bcs * bcs, FluxMethod * fluxMethod, ModelExtension * modelExtension = NULL, Bcs * rhs_bcs = NULL) :
                    data(data), model(model), bcs(bcs), fluxMethod(fluxMethod), modelExtension(modelExtension), rhs_bcs(rhs_bcs) { }
 
     //! Step function
