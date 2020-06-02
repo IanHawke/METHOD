@@ -373,7 +373,7 @@ void SRMHD_Vector_Potential::sourceTerm(double *cons, double *prims, double *aux
     iflag : int
       Error flag
 */
-int SRMHDresidual(void *p, int n, const double *x, double *fvec, int iflag)
+int SRMHD_VP_residual(void *p, int n, const double *x, double *fvec, int iflag)
 {
   // Retrieve additional arguments
   Args * args = (Args*) p;
@@ -445,7 +445,7 @@ void SRMHD_Vector_Potential::getPrimitiveVarsSingleCell(double *cons, double *pr
            (1 - sol[0]);
 
   // Solve residual = 0
-  info = __cminpack_func__(hybrd1) (&SRMHDresidual, &args, n, sol, res,
+  info = __cminpack_func__(hybrd1) (&SRMHD_VP_residual, &args, n, sol, res,
                                     tol, wa, lwa);
   // If root find fails, add failed cell to the list
   if (info!=1) {
@@ -572,7 +572,7 @@ void SRMHD_Vector_Potential::getPrimitiveVars(double *cons, double *prims, doubl
                  (1 - sol[0]);
 
         // Solve residual = 0
-        info = __cminpack_func__(hybrd1) (&SRMHDresidual, &args, n, sol, res,
+        info = __cminpack_func__(hybrd1) (&SRMHD_VP_residual, &args, n, sol, res,
                                           tol, wa, lwa);
         // If root find fails, add failed cell to the list
         if (info!=1) {
@@ -621,7 +621,7 @@ void SRMHD_Vector_Potential::getPrimitiveVars(double *cons, double *prims, doubl
       sol[0] /= neighbours.size();
       sol[1] /= neighbours.size();
       // Solve residual = 0
-      info = __cminpack_func__(hybrd1) (&SRMHDresidual, &args, n, sol, res,
+      info = __cminpack_func__(hybrd1) (&SRMHD_VP_residual, &args, n, sol, res,
                                         tol, wa, lwa);
       if (info != 1) {
         printf("Smart guessing did not work, exiting\n");

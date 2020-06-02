@@ -1,6 +1,7 @@
 #ifndef SRMHD_VECTOR_POTENTIAL_H
 #define SRMHD_VECTOR_POTENTIAL_H
 
+#include "srmhd.h"
 #include "model.h"
 
 
@@ -241,71 +242,5 @@ class SRMHD_Vector_Potential : public Model
 
 };
 
-
-
-//! <b> Residual function for spectral analysis </b>
-/*!
-  @par
-    SRMHD requires N=2 rootfind, therefore need to implement the hybrd cminpack
-  multiD Newton solver. Things may get ugly.
-  @par
-    Cant do anything about the arguments of this function, cminpack demands you
-  not enjoy anything it offers...
-
-  @param *p void pointer to the additional arguments struct, Args
-  @param n size of system (n=2 for srmhd)
-  @param *x pointer to array containing initial estimate of solution, will also hold solution
-  @param *fvec pointer to array to hold residual values. These should be 0 +- tol
-  @param iflag Cminpack error flag
-
-  @note For more information regarding the form of this function and its parameters see the URL below
-  @sa [Original source](https://github.com/devernay/cminpack)
-*/
-int residual(void *p, int n, const double *x, double *fvec, int iflag);
-
-
-
-//! <b> Additional arguments for the SRMHD residual function </b>
-/*!
-  @par
-    The conservative to primitive transformation for the SRMHD class requires an
-  N=2 dimensional nonlinear rootfind and thus requires the multi-dimensional Newton-
-  Secant solver of the Cminpack library, i.e. the function @e hybrd1. This function
-  can take additional arguments in the form of a void pointer to some data object,
-  and thus for the data required in the cons2prims solver, the additional data is
-  located in this Args data structure.
-
-*/
-typedef struct
-{
-  double
-  D,    //!< Relativistic energy for a single cell
-  g,    //!< Adiabatic index, gamma
-  Bsq,  //!< Squared magnitude of magnetic field for a single cell
-  Ssq,  //!< Square magnitude of momentum for a single cell
-  BS,   //!< Scalar product of magnetic field and momentum vector for a single cell
-  tau;  //!< Kinetic energy for a single cell
-  int i;
-} Args;
-
-
-//! <b> Stores data of the failed cons2prims rootfinder </b>
-/*!
-  @par
-    When the cons2prims rootfinder fails, we can take note of the cell, continue
-  throughout the domain and come back to that failed cell, using the average of
-  the successfully completed surrounding cells as an initial estimate for the
-  solution of the failed cell. This struct holds the failed cells data, and thus
-  we can use a vector type to hold instances of this structure when an unknown
-  number of cells inevitably fail.
-*/
-typedef struct
-{
-  // Store coordinates of the failed cell
-  int
-  //@{
-  x, y, z;  //!< Cell number of failed C2P conversion
-  //@}
-} Failed;
 
 #endif
