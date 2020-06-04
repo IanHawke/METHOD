@@ -107,6 +107,28 @@ class CurrentSheetSingleFluid : public InitialFunc
     CurrentSheetSingleFluid(Data * data, int direction=0);
 };
 
+//! <b> Single-fluid current sheet </b>
+/*!
+    See Dionysopoulou 2016 for explanation.
+  Set up is one dimensional and starts in hydrodynamic equilibrium, with
+  initial By field given by the error function. Behaviour should be diffusive
+  for moderate resistivities.
+    See Amano 2016 for two fluid details.
+*/
+class CurrentSheetSingleFluidVP : public InitialFunc
+{
+  public:
+
+    //! Current sheet initial data for one fluid, vector potential
+    /*!
+        Stores a pointer to the Data class for reference in its methods
+      @param[in] *data pointer to Data class containing global simulation data
+      @param[in] direction the axis the magnetic field is along (default is x)
+      @sa InitialFunc
+    */
+    CurrentSheetSingleFluidVP(Data * data, int direction=0);
+};
+
 
 //! <b> Single-fluid Orszag-Tang voretx </b>
 /*!

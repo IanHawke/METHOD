@@ -219,6 +219,11 @@ void FVS::fluxReconstruction_r5(double * cons, double * prims, double * aux, dou
   free(fminus);
 }
 
+void FVS::fluxReconstruction(double * cons, double * prims, double * aux, double * f, double * frecon, int dir, int vars)
+{
+  return FVS::fluxReconstruction_r3(cons, prims, aux, f, frecon, dir, vars);
+}
+
 void FVS::F(double * cons, double * prims, double * aux, double * f, double * fnet)
 {
   // Syntax

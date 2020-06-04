@@ -105,6 +105,8 @@ class FVS : public FluxMethod
 
     void fluxReconstruction_r5(double * cons, double * prims, double * aux, double * f, double * frecon, int dir, int vars=-1);
 
+    void fluxReconstruction(double * cons, double * prims, double * aux, double * f, double * frecon, int dir, int vars=-1);
+
     //! Numerical flux function
     /*!
         For a given state described by cons prims and aux arrays, determines an

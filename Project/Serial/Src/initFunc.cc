@@ -204,6 +204,36 @@ CurrentSheetSingleFluid::CurrentSheetSingleFluid(Data * data, int direction) : I
   }
 }
 
+CurrentSheetSingleFluidVP::CurrentSheetSingleFluidVP(Data * data, int direction) : InitialFunc(data)
+{
+  // Syntax
+  Data * d(data);
+
+  if (d->Nprims > 15) throw std::invalid_argument("Trying to implement a single fluid initial state on incorrect model.\n\tModel has wrong number of primitive variables to be single fluid model.");
+  if (d->xmin != -3.0 || d->xmax != 3.0) throw std::invalid_argument("Domain has incorrect values. Expected x E [-3, 3]\n");
+  if (d->gamma != 2.0) throw std::invalid_argument("Expected the index gamma = 2\n");
+
+  double B0(1);
+  const double rho(1.0);
+  const double p(50.0);
+
+
+  for (int i(0); i < d->Nx; i++) {
+    for (int j(0); j < d->Ny; j++) {
+      for (int k(0); k < d->Nz; k++) {
+        d->prims[ID(0, i, j, k)] = rho;
+        d->prims[ID(4, i, j, k)] = p;
+        if (direction == 0)
+          d->prims[ID(8, i, j, k)] = B0 * erf(0.5 * d->x[i] * sqrt(d->sigma)) * (d->y[j] - 0.5 * d->dy);
+        if (direction == 1)
+          d->prims[ID(8, i, j, k)] = B0 * erf(0.5 * d->y[j] * sqrt(d->sigma)) * (d->x[i] - 0.5 * d->dx);
+        if (direction == 2)
+          d->prims[ID(6, i, j, k)] = B0 * erf(0.5 * d->z[k] * sqrt(d->sigma)) * (d->y[j] - 0.5 * d->dy);
+      }
+    }
+  }
+}
+
 
 OTVortexSingleFluid::OTVortexSingleFluid(Data * data) : InitialFunc(data)
 {
@@ -460,7 +490,7 @@ KHInstabilitySingleFluid::KHInstabilitySingleFluid(Data * data, int mag) : Initi
           d->prims[ID(9, i, j, k)]  = -(d->prims[ID(3, i, j, k)] * d->prims[ID(5, i, j, k)] - d->prims[ID(1, i, j, k)] * d->prims[ID(7, i, j, k)]);
           d->prims[ID(10, i, j, k)] = -(d->prims[ID(1, i, j, k)] * d->prims[ID(6, i, j, k)] - d->prims[ID(2, i, j, k)] * d->prims[ID(5, i, j, k)]);
         }
-        
+
       }
     }
   }

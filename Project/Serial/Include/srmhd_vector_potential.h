@@ -15,7 +15,7 @@ This is the human readable description of this models variables.
   Twenty auxiliary variables:
     h, W, e, c, b0, bx, by, bz, bsq, vsq, BS, Bsq, Ssq, Bx, By, Bz, Ex, Ey, Ez, Phi_staggered
 
-This form uses a staggered grid. A* are defined at cell faces; everything else
+This form uses a staggered grid. A* are defined at cell edges; everything else
 at cell centres.
 */
 
