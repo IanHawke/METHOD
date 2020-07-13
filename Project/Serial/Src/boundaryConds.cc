@@ -588,6 +588,110 @@ void Periodic::apply(double * cons, double * prims, double * aux)
   }
 }
 
+// This applies periodic boundary conditions to the RHS directly.
+// It assumes a staggered grid.
+// This means the staggered variables have one more "point" to consider
+// Cell number   0   1   2         4   5   6
+//             | x | x | x | ... | x | x | x |
+// Edge number 0   1   2   3     4   5   6   7
+void PeriodicRHSStaggered::apply(double * rhs, double * prims, double * aux)
+{
+  // HACK: generalise
+  const int n_staggered_vars(4), n_centered_vars(5);
+  int staggered_vars[n_staggered_vars] = {5, 6, 7, 8};
+  int centered_vars[n_centered_vars] = {0, 1, 2, 3, 4};
+  // Syntax
+  Data * d(this->data);
+
+  // RHS
+  for (int ivar(0); ivar < n_centered_vars; ivar++) {
+    for (int i(0); i < d->Ng; i++) {
+      for (int j(0); j < d->Ny; j++) {
+        for (int k(0); k < d->Nz; k++) {
+          int var = centered_vars[ivar];
+          // Left
+          rhs[ID(var, i, j, k)] = rhs[ID(var, d->nx + i, j, k)];
+          // Right
+          rhs[ID(var, d->nx + d->Ng + i, j, k)] = rhs[ID(var, d->Ng + i, j, k)];
+        }
+      }
+    }
+  }
+  for (int ivar(0); ivar < n_staggered_vars; ivar++) {
+    for (int i(0); i < d->Ng - 1; i++) {
+      for (int j(0); j < d->Ny; j++) {
+        for (int k(0); k < d->Nz; k++) {
+          int var = staggered_vars[ivar];
+          // Left
+          rhs[ID(var, i, j, k)] = rhs[ID(var, d->nx + i + 1, j, k)];
+          // Right
+          rhs[ID(var, d->nx + d->Ng + i + 1, j, k)] = rhs[ID(var, d->Ng + i, j, k)];
+        }
+      }
+    }
+  }
+
+  if (d->Ny > 1) {
+    // RHS
+    for (int ivar(0); ivar < n_centered_vars; ivar++) {
+      for (int i(0); i < d->Nx; i++) {
+        for (int j(0); j < d->Ng; j++) {
+          for (int k(0); k < d->Nz; k++) {
+            int var = centered_vars[ivar];
+            // Front
+            rhs[ID(var, i, j, k)] = rhs[ID(var, i, d->ny + j, k)];
+            // Back
+            rhs[ID(var, i, d->ny + d->Ng + j, k)] = rhs[ID(var, i, d->Ng + j, k)];
+          }
+        }
+      }
+    }
+    for (int ivar(0); ivar < n_staggered_vars; ivar++) {
+      for (int i(0); i < d->Nx; i++) {
+        for (int j(0); j < d->Ng - 1; j++) {
+          for (int k(0); k < d->Nz; k++) {
+            int var = staggered_vars[ivar];
+            // Front
+            rhs[ID(var, i, j, k)] = rhs[ID(var, i, d->ny + j + 1, k)];
+            // Back
+            rhs[ID(var, i, d->ny + d->Ng + j + 1, k)] = rhs[ID(var, i, d->Ng + j, k)];
+          }
+        }
+      }
+    }
+  }
+
+  if (d->Nz > 1) {
+    // RHS
+    for (int ivar(0); ivar < n_centered_vars; ivar++) {
+      for (int i(0); i < d->Nx; i++) {
+        for (int j(0); j < d->Ny; j++) {
+          for (int k(0); k < d->Ng; k++) {
+            int var = centered_vars[ivar];
+            // Bottom
+            rhs[ID(var, i, j, k)] = rhs[ID(var, i, j, d->nz + k)];
+            // Top
+            rhs[ID(var, i, j, d->nz + d->Ng + k)] = rhs[ID(var, i, j, d->Ng + k)];
+          }
+        }
+      }
+    }
+    for (int ivar(0); ivar < n_staggered_vars; ivar++) {
+      for (int i(0); i < d->Nx; i++) {
+        for (int j(0); j < d->Ny; j++) {
+          for (int k(0); k < d->Ng - 1; k++) {
+            int var = staggered_vars[ivar];
+            // Bottom
+            rhs[ID(var, i, j, k)] = rhs[ID(var, i, j, d->nz + k + 1)];
+            // Top
+            rhs[ID(var, i, j, d->nz + d->Ng + k + 1)] = rhs[ID(var, i, j, d->Ng + k)];
+          }
+        }
+      }
+    }
+  }
+}
+
 
 void Flow::apply(double * cons, double * prims, double * aux)
 {

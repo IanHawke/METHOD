@@ -166,6 +166,33 @@ class Periodic : public Bcs
 
 };
 
+class PeriodicRHSStaggered : public Bcs
+{
+
+  public:
+
+    //! Constructor
+    /*!
+        Calls constructor of base class to store the pointer to the Data class.
+
+      @param[in] *data pointer to Data class
+      @sa Bcs::Bcs
+    */
+    PeriodicRHSStaggered(Data * data) : Bcs(data) { }
+
+    //! Application function
+    /*!
+        Applies the Periodic boundary conditions to the ghost cells.
+
+      @param[in, out] *RHS pointer to the RHS vector
+      @param[in, out] *prims optional pointer to the primitive vector
+      @param[in, out] *aux optional pointer to the primitive vector
+      @sa Bcs::apply
+    */
+    void apply(double * rhs, double * prims = NULL, double * aux = NULL);
+
+};
+
 
 //! <b> Flow boundary conditions </b>
 /*!
